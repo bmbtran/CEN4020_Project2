@@ -1,1 +1,55 @@
-write the search page here
+<!DOCTYPE html>
+<html>
+<head><title>Spreadsheet Viewer</title></head>
+<body>
+    <h2>Spreadsheet Data</h2>
+    
+    {% if is_logged_in %}
+        <p>You are logged in! You can edit data. 
+        <form action="/logout" method="POST" style="display:inline;">
+            <button type="submit">Logout</button>
+        </form></p>
+    {% else %}
+        <p><a href="/login">Login</a> to edit.</p>
+    {% endif %}
+
+    <input type="text" id="searchInput" placeholder="Search...">
+    <button onclick="performSearch()">Search</button>
+
+    <pre id="dataContainer">Loading...</pre>
+
+    <script>
+        // Fetch and display data on load
+        async function loadData() {
+            const response = await fetch('/api/data');
+            const data = await response.json();
+            document.getElementById('dataContainer').textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Perform Search
+        async function performSearch() {
+            const query = document.getElementById('searchInput').value;
+            const response = await fetch(`/api/data?q=${query}`);
+            const data = await response.json();
+            document.getElementById('dataContainer').textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Example Edit Function (relies on the HTTP-only cookie automatically sent by the browser)
+        async function editRow(rowId, newName) {
+            const response = await fetch(`/api/data/row/${rowId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName })
+            });
+            if (response.ok) {
+                alert('Saved successfully!');
+                loadData();
+            } else {
+                alert('Failed to save. Are you logged in?');
+            }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
